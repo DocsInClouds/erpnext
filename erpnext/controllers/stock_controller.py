@@ -505,7 +505,7 @@ class StockController(AccountsController):
 		):
 			return
 
-		for row in self.get("items"):
+		for row in (self.get("items") + (self.get("packed_items")  if self.get("packed_items") else [])):
 			qi_required = False
 			if inspection_required_fieldname and frappe.db.get_value(
 				"Item", row.item_code, inspection_required_fieldname
@@ -792,7 +792,7 @@ def make_quality_inspections(doctype, docname, items):
 		quality_inspection = frappe.get_doc(
 			{
 				"doctype": "Quality Inspection",
-				"inspection_type": "Incoming",
+				"inspection_type": "Incoming" if doctype in ["Purchase Invoice", "Purchase Receipt"] else "Outgoing",
 				"inspected_by": frappe.session.user,
 				"reference_type": doctype,
 				"reference_name": docname,

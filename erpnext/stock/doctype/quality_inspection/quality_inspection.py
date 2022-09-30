@@ -82,11 +82,14 @@ class QualityInspection(Document):
 				)
 
 		else:
-			args = [quality_inspection, self.modified, self.reference_name, self.item_code]
-			doctype = self.reference_type + " Item"
+			args = [quality_inspection, self.mogdified, self.reference_name, self.item_code]
+			doctypes = [self.reference_type + " Item"]
 
 			if self.reference_type == "Stock Entry":
-				doctype = "Stock Entry Detail"
+				doctypes = ["Stock Entry Detail"]
+
+			if self.reference_type == "Delivery Note":
+				doctypes.append("Packed Item")
 
 			if self.reference_type and self.reference_name:
 				conditions = ""
@@ -98,22 +101,23 @@ class QualityInspection(Document):
 					conditions += " and t1.quality_inspection = %s"
 					args.append(self.name)
 
-				frappe.db.sql(
-					"""
-					UPDATE
-						`tab{child_doc}` t1, `tab{parent_doc}` t2
-					SET
-						t1.quality_inspection = %s, t2.modified = %s
-					WHERE
-						t1.parent = %s
-						and t1.item_code = %s
-						and t1.parent = t2.name
-						{conditions}
-				""".format(
-						parent_doc=self.reference_type, child_doc=doctype, conditions=conditions
-					),
-					args,
-				)
+				for doctype in doctypes:
+					frappe.db.sql(
+						"""
+						UPDATE
+							`tab{child_doc}` t1, `tab{parent_doc}` t2
+						SET
+							t1.quality_inspection = %s, t2.modified = %s
+						WHERE
+							t1.parent = %s
+							and t1.item_code = %s
+							and t1.parent = t2.name
+							{conditions}
+					""".format(
+							parent_doc=self.reference_type, child_doc=doctype, conditions=conditions
+						),
+						args,
+					)
 
 	def inspect_and_set_status(self):
 		for reading in self.readings:

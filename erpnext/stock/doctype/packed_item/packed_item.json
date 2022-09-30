@@ -23,6 +23,7 @@
   "column_break_11",
   "batch_no",
   "actual_batch_qty",
+  "quality_inspection",
   "section_break_13",
   "actual_qty",
   "projected_qty",
@@ -242,13 +243,21 @@
    "label": "Picked Qty",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "quality_inspection",
+   "fieldtype": "Link",
+   "label": "Quality Inspection",
+   "no_copy": 1,
+   "options": "Quality Inspection",
+   "print_hide": 1
   }
  ],
  "idx": 1,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-04-27 05:23:08.683245",
+ "modified": "2022-09-30 17:14:51.058820",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Packed Item",

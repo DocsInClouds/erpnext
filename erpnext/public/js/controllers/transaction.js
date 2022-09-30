@@ -1985,29 +1985,43 @@ erpnext.TransactionController = class TransactionController extends erpnext.taxe
 			primary_action_label: __("Create")
 		});
 
-		this.frm.doc.items.forEach(item => {
-			if (!item.quality_inspection) {
-				let dialog_items = dialog.fields_dict.items;
-				dialog_items.df.data.push({
-					"docname": item.name,
-					"item_code": item.item_code,
-					"item_name": item.item_name,
-					"qty": item.qty,
-					"description": item.description,
-					"serial_no": item.serial_no,
-					"batch_no": item.batch_no,
-					"sample_size": item.sample_quantity
-				});
-				dialog_items.grid.refresh();
+		let queries = [];
+		this.frm.doc.items.concat((this.frm.doc.hasOwnProperty('packed_items')) ? this.frm.doc.packed_items : []).forEach(item => {
+			// Get all items to be able to check, whether they need QI or not
+			queries.push(frappe.db.get_doc('Item', item.item_code));
+		});
+		
+		Promise.all(queries).then(item_masters => {
+			let needs_qi = {};
+
+			item_masters.forEach(item => {
+				needs_qi[item.name] = item.inspection_required_before_purchase || item.inspection_required_before_delivery;
+			});
+
+			this.frm.doc.items.concat((this.frm.doc.hasOwnProperty('packed_items')) ? this.frm.doc.packed_items : []).forEach(item => {
+				if (!item.quality_inspection && needs_qi[item.item_code]) {
+					let dialog_items = dialog.fields_dict.items;
+					dialog_items.df.data.push({
+						"docname": item.name,
+						"item_code": item.item_code,
+						"item_name": item.item_name,
+						"qty": item.qty,
+						"description": item.description,
+						"serial_no": item.serial_no,
+						"batch_no": item.batch_no,
+						"sample_size": item.sample_quantity
+					});
+					dialog_items.grid.refresh();
+				}
+			});
+
+			data = dialog.fields_dict.items.df.data;
+			if (!data.length) {
+				frappe.msgprint(__("All items in this document already have a linked Quality Inspection."));
+			} else {
+				dialog.show();
 			}
 		});
-
-		data = dialog.fields_dict.items.df.data;
-		if (!data.length) {
-			frappe.msgprint(__("All items in this document already have a linked Quality Inspection."));
-		} else {
-			dialog.show();
-		}
 	}
 
 	get_method_for_payment() {
